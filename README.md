@@ -78,7 +78,7 @@ The **Engagement Metrics Dashboard** (see `Koda Health Demo.twb`) surfaces:
 - `Koda Health Demo.twb` – Tableau dashboard workbook  
 - `Koda Health Case Study.pptx` – Presentation slides summarizing findings  
 - `Instructions.pdf` – Case study brief  
-- `dashboard.png` – Dashboard screenshot  -- Pending
+- `dashboard.png` – Dashboard screenshot
 
 ---
 
