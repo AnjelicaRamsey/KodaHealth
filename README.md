@@ -19,7 +19,7 @@ The dashboard highlights patient engagement across multiple communication channe
 Two categories of input data were provided:contentReference[oaicite:0]{index=0}:
 
 1. **Engagement Data**  
-   - **Email Engagement**: deliveries, opens, and clicks across 3 activation emails  
+   - **Email Engagement**: deliveries, opens, and clicks across three activation emails  
    - **Text Message Engagement**: deliveries, clicks on account creation link  
    - **Phone Call Logs**: up to 3 call attempts, outcomes (answered, voicemail, unanswered)
 
@@ -36,7 +36,7 @@ Key steps:contentReference[oaicite:1]{index=1}:
 - **Staging** raw event tables (patients, email, text, phone, app).  
 - **Joining** on patient ID as the hub key.  
 - **Deduplication** of emails by `email_number`; normalization of booleans.  
-- **Timestamp handling** – converted to a single timezone, truncated to daily grain.  
+- **Timestamp handling** – converted to a single timezone, truncated to daily granularity.  
 - **Aggregation** into a `mart_patient_flat` table (1 row per patient).  
 - **Quality checks** – row counts, distinct keys, null scans.  
 
@@ -59,7 +59,7 @@ Patients are assigned a **0–100 score**, rolled up into tiers (High/Medium/Low
 - Medium = 20–39 pts  
 - Low = <20 pts  
 
-This definition can evolve based on clinician feedback to better reflect “real” engagement.
+This definition can evolve based on  feedback to reflect better “real” engagement.
 
 ---
 
