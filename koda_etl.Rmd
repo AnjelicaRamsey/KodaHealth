@@ -1,0 +1,359 @@
+---
+title: "Koda_Case_Study_ETL"
+output: html_document
+date: "2025-09-24"
+---
+
+```{r setup, include=FALSE}
+# libraries
+library(DBI)
+library(RPostgres)
+library(readr)
+library(dplyr)
+library(readr)
+
+# 0) Connect
+con <- dbConnect(
+  Postgres(),
+  dbname   = "koda_etl_demo",
+  host     = "localhost",
+  port     = 5432,
+  user     = "postgres",
+  password = Sys.getenv("PG_PASSWORD")
+)
+```
+
+
+```{r}
+# Step: Create staging tables in PostgreSQL
+# Staging to  load the raw CSVs exactly as they are.
+# Purpose:
+#   - Preserve original data without transformations.
+#   - Keep a clear audit trail from source files to database.
+#   - Provide a "landing zone" before building the cleaned flat table.
+
+ddl <- c(
+  "CREATE SCHEMA IF NOT EXISTS staging",
+
+  "CREATE TABLE IF NOT EXISTS staging.user_profile(
+     patient_id TEXT PRIMARY KEY,
+     age INT, gender TEXT, insurance_type TEXT, state TEXT,
+     preferred_decision_maker TEXT, treatment_preference TEXT,
+     preferred_location TEXT, values TEXT, unacceptable_qol TEXT
+   )",
+
+  "CREATE TABLE IF NOT EXISTS staging.app_engagement(
+     patient_id TEXT,
+     referral_date DATE,
+     account_created DATE,
+     guide_started DATE,
+     guide_completed DATE,
+     guide_signed DATE
+   )",
+
+  "CREATE TABLE IF NOT EXISTS staging.email_engagement(
+     patient_id TEXT,
+     email_number INT,
+     sent_date TIMESTAMP,
+     opened BOOLEAN,
+     clicked BOOLEAN
+   )",
+
+  "CREATE TABLE IF NOT EXISTS staging.text_engagement(
+     patient_id TEXT,
+     sent_date TIMESTAMP,
+     delivered BOOLEAN,
+     clicked BOOLEAN
+   )",
+
+  "CREATE TABLE IF NOT EXISTS staging.phone_calls(
+     patient_id TEXT,
+     call_attempt INT,
+     call_date TIMESTAMP,
+     outcome TEXT
+   )"
+)
+
+for (stmt in ddl) {
+  DBI::dbExecute(con, stmt)
+}
+
+```
+
+
+```{r}
+# Test return 
+# DBI::dbListTables(con, schema = "staging")
+```
+
+
+```{r}
+# Set directory path 
+data_dir <- "/Users/anjelicaramsey/Documents/KodaHealth/Koda Health Senior Data Analyst Case Study"
+
+p_user  <- file.path(data_dir, "user_inputted_app_data_updated.csv")
+p_app   <- file.path(data_dir, "app_engagement.csv")
+p_email <- file.path(data_dir, "email_engagement.csv")
+p_text  <- file.path(data_dir, "text_engagement.csv")
+p_calls <- file.path(data_dir, "phone_calls.csv")
+```
+
+
+```{r}
+#  Read CSVs with explicit column types.
+#   Purpose is to avoids surprises (e.g., dates parsed as text, booleans parsed as 0/1).
+
+user_profile <- read_csv(p_user, show_col_types = FALSE)
+
+app_eng <- read_csv(p_app,
+  col_types = cols(
+    patient_id      = col_character(),
+    referral_date   = col_date(),
+    account_created = col_date(),
+    guide_started   = col_date(),
+    guide_completed = col_date(),
+    guide_signed    = col_date()
+  )
+)
+
+email <- read_csv(p_email,
+  col_types = cols(
+    patient_id   = col_character(),
+    email_number = col_integer(),
+    sent_date    = col_datetime(),  # expects ISO-like timestamps
+    opened       = col_logical(),
+    clicked      = col_logical()
+  )
+)
+
+textm <- read_csv(p_text,
+  col_types = cols(
+    patient_id = col_character(),
+    sent_date  = col_datetime(),
+    delivered  = col_logical(),
+    clicked    = col_logical()
+  )
+)
+
+calls <- read_csv(p_calls,
+  col_types = cols(
+    patient_id   = col_character(),
+    call_attempt = col_integer(),
+    call_date    = col_datetime(),
+    outcome      = col_character()
+  )
+)
+```
+
+
+```{r}
+#   Load into PostgreSQL staging.
+#    overwrite=TRUE makes the pipeline idempotent for demos: each run resets staging
+#    to match the current CSVs exactly.
+dbWriteTable(con, Id(schema="staging", table="user_profile"),     user_profile, overwrite=TRUE)
+dbWriteTable(con, Id(schema="staging", table="app_engagement"),   app_eng,     overwrite=TRUE)
+dbWriteTable(con, Id(schema="staging", table="email_engagement"), email,       overwrite=TRUE)
+dbWriteTable(con, Id(schema="staging", table="text_engagement"),  textm,       overwrite=TRUE)
+dbWriteTable(con, Id(schema="staging", table="phone_calls"),      calls,       overwrite=TRUE)
+```
+
+
+```{r}
+# Sanity check staging before building flat mart, to confirm row counts and a few distinct values that will drive mappings.
+
+# Row counts by table
+dbGetQuery(con, "
+  SELECT 'user_profile'     AS table_name, COUNT(*) AS rows FROM staging.user_profile
+  UNION ALL SELECT 'app_engagement',   COUNT(*) FROM staging.app_engagement
+  UNION ALL SELECT 'email_engagement', COUNT(*) FROM staging.email_engagement
+  UNION ALL SELECT 'text_engagement',  COUNT(*) FROM staging.text_engagement
+  UNION ALL SELECT 'phone_calls',      COUNT(*) FROM staging.phone_calls
+")
+```
+
+
+```{r}
+# Distinct phone outcomes for mapping (answered/voicemail/etc.)
+dbGetQuery(con, "
+  SELECT outcome, COUNT(*) AS n
+  FROM staging.phone_calls
+  GROUP BY outcome
+  ORDER BY n DESC
+")
+
+# Check email/text boolean parsing
+dbGetQuery(con, "
+  SELECT
+    SUM((opened  IS TRUE)::int)  AS emails_opened_true,
+    SUM((clicked IS TRUE)::int)  AS emails_clicked_true
+  FROM staging.email_engagement
+")
+
+dbGetQuery(con, "
+  SELECT
+    SUM((delivered IS TRUE)::int) AS texts_delivered_true,
+    SUM((clicked   IS TRUE)::int) AS texts_clicked_true
+  FROM staging.text_engagement
+")
+
+```
+
+```{r}
+# Drop first so the CREATE below is a single statement. Noted out since already created. 
+# dbExecute(con, "DROP TABLE IF EXISTS mart_patient_flat")
+```
+
+
+```{r}
+# Create 1-row-per-patient flat mart with aggregated engagement
+dbExecute(con, "
+  CREATE TABLE mart_patient_flat AS
+  WITH
+  email_agg AS (
+    SELECT
+      patient_id,
+      COUNT(DISTINCT email_number)                         AS total_emails_sent,
+      SUM(CASE WHEN opened  IS TRUE THEN 1 ELSE 0 END)     AS emails_opened,
+      SUM(CASE WHEN clicked IS TRUE THEN 1 ELSE 0 END)     AS email_clicks,
+      MIN(sent_date)                                       AS first_email_dt,
+      MAX(sent_date)                                       AS last_email_dt
+    FROM staging.email_engagement
+    GROUP BY patient_id
+  ),
+  text_agg AS (
+    SELECT
+      patient_id,
+      COUNT(*) FILTER (WHERE delivered IS TRUE)            AS texts_delivered,
+      COUNT(*) FILTER (WHERE clicked  IS TRUE)             AS texts_clicked,
+      MIN(sent_date)                                       AS first_text_dt,
+      MAX(sent_date)                                       AS last_text_dt
+    FROM staging.text_engagement
+    GROUP BY patient_id
+  ),
+  phone_agg AS (
+    SELECT
+      patient_id,
+      COUNT(*) FILTER (WHERE outcome ILIKE 'answered')  AS calls_answered,
+      COUNT(*) FILTER (WHERE outcome ILIKE 'voicemail') AS calls_voicemail,
+      COUNT(*) FILTER (WHERE outcome ILIKE 'no%answer') AS calls_no_answer,
+      MIN(call_date)                                    AS first_call_dt,
+      MAX(call_date)                                    AS last_call_dt
+    FROM staging.phone_calls
+    GROUP BY patient_id
+  )
+  SELECT
+    u.patient_id,
+    u.age, u.gender, u.insurance_type, u.state,
+    u.preferred_decision_maker, u.treatment_preference,
+    u.preferred_location, u.values, u.unacceptable_qol,
+
+    a.referral_date, a.account_created, a.guide_started, a.guide_completed, a.guide_signed,
+
+    COALESCE(e.total_emails_sent, 0) AS total_emails_sent,
+    COALESCE(e.emails_opened,     0) AS emails_opened,
+    COALESCE(e.email_clicks,      0) AS email_clicks,
+    e.first_email_dt, e.last_email_dt,
+
+    COALESCE(t.texts_delivered,   0) AS texts_delivered,
+    COALESCE(t.texts_clicked,     0) AS texts_clicked,
+    t.first_text_dt, t.last_text_dt,
+
+    COALESCE(p.calls_answered,    0) AS calls_answered,
+    COALESCE(p.calls_voicemail,   0) AS calls_voicemail,
+    COALESCE(p.calls_no_answer,   0) AS calls_no_answer,
+    p.first_call_dt, p.last_call_dt
+
+  FROM staging.user_profile u
+  LEFT JOIN staging.app_engagement a ON u.patient_id = a.patient_id
+  LEFT JOIN email_agg e               ON u.patient_id = e.patient_id
+  LEFT JOIN text_agg  t               ON u.patient_id = t.patient_id
+  LEFT JOIN phone_agg p               ON u.patient_id = p.patient_id
+")
+```
+
+
+```{r}
+# visually confirm columns merged correctly (profile/app/email/text/phone).
+dbGetQuery(con, "SELECT COUNT(*) AS rows_in_flat FROM mart_patient_flat")
+dbGetQuery(con, "SELECT * FROM mart_patient_flat ORDER BY patient_id LIMIT 10")
+```
+
+```{r}
+# Create engagement score, HALTED to be created in tableau instead and not cleaned data
+# dbExecute(con, "
+#   CREATE OR REPLACE VIEW v_patient_engagement_score AS
+#   SELECT
+#       patient_id,
+#       LEAST(
+#         (CASE WHEN account_created IS NOT NULL THEN 10 ELSE 0 END) +
+#         (CASE WHEN guide_started   IS NOT NULL THEN 10 ELSE 0 END) +
+#         (CASE WHEN guide_completed IS NOT NULL THEN 10 ELSE 0 END) +
+#         (CASE WHEN guide_signed    IS NOT NULL THEN 10 ELSE 0 END) +
+#         (email_clicks * 3) +
+#         (calls_answered * 4) +
+#         (calls_voicemail * 1) +
+#         (emails_opened * 1),
+#         100
+#       ) AS engagement_score
+#   FROM mart_patient_flat
+# ")
+# 
+# dbGetQuery(con, "SELECT patient_id, engagement_score
+#                  FROM v_patient_engagement_score
+#                  ORDER BY engagement_score DESC
+#                  LIMIT 10")
+```
+
+```{r}
+# Add indexes on patient_id, state, and referral_date.
+# Purpose:
+#   - patient_id: speeds up joins/lookups by patient
+#   - state: supports grouping/filtering by geography
+#   - referral_date: takes time-based filtering faster
+# These don’t change the data, they just make queries against the mart more efficient
+dbExecute(con, "CREATE INDEX IF NOT EXISTS idx_mpf_patient ON mart_patient_flat(patient_id)")
+dbExecute(con, "CREATE INDEX IF NOT EXISTS idx_mpf_state   ON mart_patient_flat(state)")
+dbExecute(con, "CREATE INDEX IF NOT EXISTS idx_mpf_date    ON mart_patient_flat(referral_date)")
+```
+
+```{r}
+# Test
+dbGetQuery(con, "
+  SELECT schemaname, tablename, indexname, indexdef
+  FROM pg_indexes
+  WHERE schemaname = 'public' AND tablename = 'mart_patient_flat'
+  ORDER BY indexname;
+")
+```
+
+```{r}
+# show each column’s name, type, nullability, and default.
+dbGetQuery(con, "
+  SELECT column_name,
+         data_type,
+         is_nullable,
+         column_default
+  FROM information_schema.columns
+  WHERE table_schema = 'public'  -- change if not in public
+    AND table_name   = 'mart_patient_flat'
+  ORDER BY ordinal_position;
+")
+```
+
+```{r}
+flat_dict <- dbGetQuery(con, "
+  SELECT 
+    column_name,
+    data_type,
+    is_nullable
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name   = 'mart_patient_flat'
+  ORDER BY ordinal_position;
+")
+
+# View in RStudio
+View(flat_dict)
+```
+
+

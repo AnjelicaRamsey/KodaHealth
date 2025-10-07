@@ -1,0 +1,51 @@
+patient_id,age,gender,insurance_type,state,preferred_decision_maker,treatment_preference,preferred_location,values,unacceptable_qol
+P001,84,Female,Uninsured,TX,Child,Full Treatment,Home,Friends;Independence,Severe Financial Burden;Not Able To Move;Not Being Able To Live Alone
+P002,48,Female,Private,NY,Child,Limited Interventions,Home,Family;Friends;Pets,Not Able To Leave Bed;Not Being Able To Live Alone
+P003,48,Female,Uninsured,NY,None,Full Treatment,Hospital,Career;Independence,Severe Financial Burden;Not Able To Think
+P004,56,Other,Medicaid,FL,Spouse,Comfort Care,Hospital,Friends,Living In A Nursing Home;Not Able To Leave Bed;Not Being Able To Live Alone;Not Able To Drive
+P005,82,Male,Uninsured,TX,Child,Full Treatment,Care Facility,Career,Not Able To Think
+P006,78,Female,Medicaid,CA,Friend,Limited Interventions,Home,Friends;Family,Severe Financial Burden
+P007,89,Male,Medicaid,CA,Child,Limited Interventions,Hospital,Other;Friends;Religion,Not Being Able To Live Alone;Not Able To Feed;Not Able To Leave Bed
+P008,83,Other,Uninsured,TX,Friend,Full Treatment,Hospital,Religion,Living With Discomfort;Not Able To Talk;Not Able To Think;Living In A Nursing Home
+P009,77,Male,Medicare,CA,Friend,Full Treatment,Care Facility,Hobbies;Career;Pets,Not Able To Feed;Not Being Able To Bathroom
+P010,58,Other,Private,TX,Child,Comfort Care,Care Facility,Family;Religion,Not Having Relationships;Not Being Able To Live Alone;Living With Discomfort;Not Able To Feed
+P011,88,Other,Medicare,CA,Friend,Comfort Care,Hospital,Friends,Not Able To Move;Not Being Able To Bathroom;Not Able To Talk;Living In Constant Pain
+P012,49,Other,Uninsured,IL,Other Family,Comfort Care,Care Facility,Hobbies,Not Being Able To Live Alone
+P013,88,Other,Uninsured,CA,Spouse,Comfort Care,Hospital,Friends,Severe Financial Burden;Not Having Relationships;Not Being Able To Bathroom
+P014,55,Male,Medicaid,FL,None,Limited Interventions,Care Facility,Hobbies;Other;Family,Not Able To Move;Not Being Able To Bathroom;Not Able To Drive;Not Being Able To Live Alone
+P015,70,Female,Uninsured,TX,Child,Comfort Care,Home,Career;Hobbies;Family,Living In Constant Pain;Not Able To Think;Not Able To Leave Bed;Not Able To Drive
+P016,62,Other,Medicare,FL,Spouse,Full Treatment,Home,Other,Not Able To Leave Bed
+P017,55,Male,Medicaid,NY,Other Family,Comfort Care,Home,Religion,Not Able To Leave Bed;Not Having Relationships
+P018,64,Other,Medicaid,IL,Friend,Comfort Care,Home,Hobbies;Other,Not Able To Feed;Not Having Relationships;Living In Constant Pain;Living With Discomfort
+P019,51,Female,Medicare,TX,None,Limited Interventions,Hospital,Friends;Religion,Not Able To Drive
+P020,65,Female,Medicaid,FL,Spouse,Full Treatment,Home,Independence;Pets;Hobbies,Living With Discomfort;Living In Constant Pain;Not Able To Think
+P021,65,Male,Uninsured,FL,Friend,Comfort Care,Home,Independence,Not Being Able To Bathroom
+P022,49,Female,Medicare,NY,Spouse,Full Treatment,Hospital,Family;Other;Pets,Not Able To Move;Not Able To Talk;Living In A Nursing Home;Not Able To Feed
+P023,62,Other,Medicare,NY,Child,Full Treatment,Care Facility,Pets;Friends;Career,Severe Financial Burden
+P024,61,Other,Medicaid,FL,Spouse,Limited Interventions,Hospital,Family;Friends,Not Able To Talk
+P025,53,Female,Medicaid,CA,Spouse,Limited Interventions,Home,Family;Independence,Not Able To Feed;Living In A Nursing Home;Living With Discomfort
+P026,46,Male,Private,IL,Child,Comfort Care,Hospital,Pets;Friends;Hobbies,Not Able To Feed
+P027,87,Other,Uninsured,FL,Child,Limited Interventions,Hospital,Friends,Not Having Relationships;Not Able To Drive;Not Able To Feed
+P028,62,Other,Medicaid,CA,Other Family,Full Treatment,Hospital,Family;Career,Living In A Nursing Home;Not Able To Feed;Not Able To Move
+P029,70,Female,Medicaid,TX,Spouse,Limited Interventions,Home,Hobbies,Living In A Nursing Home;Severe Financial Burden
+P030,78,Other,Uninsured,IL,None,Limited Interventions,Home,Independence;Career,Not Being Able To Live Alone;Not Able To Think;Not Being Able To Bathroom;Living In A Nursing Home
+P031,81,Other,Private,IL,Other Family,Comfort Care,Care Facility,Friends;Independence;Religion,Not Able To Move;Severe Financial Burden
+P032,53,Male,Uninsured,TX,None,Comfort Care,Hospital,Hobbies;Pets;Religion,Not Able To Think
+P033,74,Male,Medicaid,NY,Other Family,Comfort Care,Home,Religion;Pets;Career,Not Able To Talk;Living With Discomfort;Not Able To Leave Bed;Not Being Able To Bathroom
+P034,42,Female,Medicare,IL,Spouse,Full Treatment,Hospital,Hobbies,Not Able To Talk;Not Having Relationships
+P035,79,Female,Medicare,IL,Child,Full Treatment,Hospital,Career,Not Able To Drive;Living With Discomfort;Not Being Able To Live Alone
+P036,62,Other,Medicare,TX,Other Family,Limited Interventions,Home,Career;Religion,Not Able To Talk;Living In A Nursing Home;Not Having Relationships
+P037,88,Other,Medicare,NY,Spouse,Limited Interventions,Hospital,Career;Family;Friends,Not Able To Drive;Not Able To Leave Bed;Not Able To Move
+P038,64,Female,Medicare,FL,None,Full Treatment,Hospital,Pets,Not Able To Talk;Not Able To Drive
+P039,72,Male,Medicare,TX,Other Family,Limited Interventions,Care Facility,Independence,Living With Discomfort;Not Being Able To Live Alone
+P040,83,Other,Private,TX,None,Comfort Care,Care Facility,Friends,Severe Financial Burden;Not Able To Leave Bed
+P041,74,Male,Medicare,CA,Other Family,Limited Interventions,Home,Friends;Religion,Not Being Able To Live Alone;Not Able To Move
+P042,69,Male,Private,TX,Friend,Full Treatment,Hospital,Other;Pets,Living In Constant Pain;Not Being Able To Live Alone
+P043,52,Female,Medicaid,FL,Child,Full Treatment,Hospital,Friends;Family;Independence,Not Being Able To Bathroom;Not Having Relationships;Not Able To Think
+P044,71,Male,Uninsured,TX,Friend,Full Treatment,Home,Family,Not Able To Talk;Not Having Relationships
+P045,78,Female,Private,FL,None,Comfort Care,Home,Other;Career;Friends,Not Able To Talk;Not Having Relationships;Not Able To Move
+P046,68,Male,Uninsured,CA,Other Family,Full Treatment,Hospital,Hobbies;Other,Not Being Able To Bathroom;Not Able To Think;Not Able To Talk;Severe Financial Burden
+P047,68,Other,Medicaid,NY,Friend,Full Treatment,Care Facility,Career;Family,Living With Discomfort
+P048,83,Other,Uninsured,TX,Friend,Comfort Care,Home,Friends;Family,Living In Constant Pain
+P049,83,Other,Private,NY,Friend,Limited Interventions,Home,Friends,Not Able To Talk;Living With Discomfort;Not Able To Feed;Not Being Able To Live Alone
+P050,49,Male,Medicare,FL,None,Limited Interventions,Hospital,Family;Friends;Religion,Living In Constant Pain
